@@ -1,0 +1,50 @@
+
+================ PART C ================
+
+---- C1: mid-trip trigger ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t=1286 | MOVING_UP  floor=3 up=1 dn=0 door=0 | int=0 ext=6 jg=00
+t=1296 | MOVING_UP  floor=4 up=1 dn=0 door=0 | int=1 ext=0 jg=00
+t=1306 | MOVING_UP  floor=5 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t=1316 | MOVING_UP  floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=01
+t=1326 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=10
+  C1 #1 | [1;32mPASS[0m
+t=1336 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=01
+  C1 #2 | [1;32mPASS[0m
+t=1346 | MOVING_DN  floor=6 up=0 dn=1 door=0 | int=0 ext=2 jg=00
+  C1 #3 | [1;32mPASS[0m
+
+---- C2: trigger during DOOR_OPEN ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t=1386 | MOVING_UP  floor=4 up=1 dn=0 door=0 | int=0 ext=6 jg=00
+t=1396 | MOVING_UP  floor=5 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t=1406 | MOVING_UP  floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1416 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1426 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=11
+t=1436 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1446 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=01
+  C2 #1 | [1;32mPASS[0m
+
+---- C3: unbalanced code must not trigger ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t=1486 | MOVING_UP  floor=1 up=1 dn=0 door=0 | int=0 ext=4 jg=00
+t=1496 | MOVING_UP  floor=2 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t=1506 | MOVING_UP  floor=3 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t=1516 | MOVING_UP  floor=4 up=0 dn=0 door=0 | int=0 ext=0 jg=11
+t=1526 | DOOR_OPEN  floor=4 up=0 dn=0 door=1 | int=0 ext=0 jg=11
+t=1536 | DOOR_OPEN  floor=4 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1546 | DOOR_OPEN  floor=4 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1556 | DOOR_OPEN  floor=4 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1566 | IDLE       floor=4 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1576 | IDLE       floor=4 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1586 | IDLE       floor=4 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1596 | IDLE       floor=4 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+  C3: n=1 cap=00000004 (exp n=1 cap=00000004) bad=0 | [1;32mPASS[0m
+
+================ SUMMARY: PART C ================
+  PART C (optional, bonus)  : [1;32mPASS[0m
+=================================================
+task3/tb_task3.v:385: $finish called at 1600 (1ns)

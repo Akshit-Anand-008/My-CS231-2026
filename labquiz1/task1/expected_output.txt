@@ -1,0 +1,69 @@
+VCD info: dumpfile task1.vcd opened for output.
+=== PART (a): mux2 -- all 8 input combinations ===
+  mux2  sel=0 a=0 b=0 -> y=0 (exp 0) | PASS
+  mux2  sel=0 a=0 b=1 -> y=0 (exp 0) | PASS
+  mux2  sel=0 a=1 b=0 -> y=1 (exp 1) | PASS
+  mux2  sel=0 a=1 b=1 -> y=1 (exp 1) | PASS
+  mux2  sel=1 a=0 b=0 -> y=0 (exp 0) | PASS
+  mux2  sel=1 a=0 b=1 -> y=1 (exp 1) | PASS
+  mux2  sel=1 a=1 b=0 -> y=0 (exp 0) | PASS
+  mux2  sel=1 a=1 b=1 -> y=1 (exp 1) | PASS
+
+=== PART (a): mux4 -- exhaustive, 16 data x 4 select = 64 cases ===
+  mux4: 64/64 cases correct | PASS
+
+=== PART (b): mux4_bus -- directed (distinct bus per port) ===
+  mux4_bus  sel=0 buses={ef,be,ad,de} -> y=de (exp de) | PASS
+  mux4_bus  sel=1 buses={ef,be,ad,de} -> y=ad (exp ad) | PASS
+  mux4_bus  sel=2 buses={ef,be,ad,de} -> y=be (exp be) | PASS
+  mux4_bus  sel=3 buses={ef,be,ad,de} -> y=ef (exp ef) | PASS
+
+=== PART (b): mux4_bus -- sweep, 8 patterns rotated over 4 ports, all selects ===
+  mux4_bus  sel=0 buses={55,aa,ff,00} -> y=00 (exp 00) | PASS
+  mux4_bus  sel=1 buses={55,aa,ff,00} -> y=ff (exp ff) | PASS
+  mux4_bus  sel=2 buses={55,aa,ff,00} -> y=aa (exp aa) | PASS
+  mux4_bus  sel=3 buses={55,aa,ff,00} -> y=55 (exp 55) | PASS
+  mux4_bus  sel=0 buses={0f,55,aa,ff} -> y=ff (exp ff) | PASS
+  mux4_bus  sel=1 buses={0f,55,aa,ff} -> y=aa (exp aa) | PASS
+  mux4_bus  sel=2 buses={0f,55,aa,ff} -> y=55 (exp 55) | PASS
+  mux4_bus  sel=3 buses={0f,55,aa,ff} -> y=0f (exp 0f) | PASS
+  mux4_bus  sel=0 buses={f0,0f,55,aa} -> y=aa (exp aa) | PASS
+  mux4_bus  sel=1 buses={f0,0f,55,aa} -> y=55 (exp 55) | PASS
+  mux4_bus  sel=2 buses={f0,0f,55,aa} -> y=0f (exp 0f) | PASS
+  mux4_bus  sel=3 buses={f0,0f,55,aa} -> y=f0 (exp f0) | PASS
+  mux4_bus  sel=0 buses={3c,f0,0f,55} -> y=55 (exp 55) | PASS
+  mux4_bus  sel=1 buses={3c,f0,0f,55} -> y=0f (exp 0f) | PASS
+  mux4_bus  sel=2 buses={3c,f0,0f,55} -> y=f0 (exp f0) | PASS
+  mux4_bus  sel=3 buses={3c,f0,0f,55} -> y=3c (exp 3c) | PASS
+  mux4_bus  sel=0 buses={81,3c,f0,0f} -> y=0f (exp 0f) | PASS
+  mux4_bus  sel=1 buses={81,3c,f0,0f} -> y=f0 (exp f0) | PASS
+  mux4_bus  sel=2 buses={81,3c,f0,0f} -> y=3c (exp 3c) | PASS
+  mux4_bus  sel=3 buses={81,3c,f0,0f} -> y=81 (exp 81) | PASS
+  mux4_bus  sel=0 buses={00,81,3c,f0} -> y=f0 (exp f0) | PASS
+  mux4_bus  sel=1 buses={00,81,3c,f0} -> y=3c (exp 3c) | PASS
+  mux4_bus  sel=2 buses={00,81,3c,f0} -> y=81 (exp 81) | PASS
+  mux4_bus  sel=3 buses={00,81,3c,f0} -> y=00 (exp 00) | PASS
+  mux4_bus  sel=0 buses={ff,00,81,3c} -> y=3c (exp 3c) | PASS
+  mux4_bus  sel=1 buses={ff,00,81,3c} -> y=81 (exp 81) | PASS
+  mux4_bus  sel=2 buses={ff,00,81,3c} -> y=00 (exp 00) | PASS
+  mux4_bus  sel=3 buses={ff,00,81,3c} -> y=ff (exp ff) | PASS
+  mux4_bus  sel=0 buses={aa,ff,00,81} -> y=81 (exp 81) | PASS
+  mux4_bus  sel=1 buses={aa,ff,00,81} -> y=00 (exp 00) | PASS
+  mux4_bus  sel=2 buses={aa,ff,00,81} -> y=ff (exp ff) | PASS
+  mux4_bus  sel=3 buses={aa,ff,00,81} -> y=aa (exp aa) | PASS
+
+=== PART (c): alu -- directed (wraparound, borrow) ===
+  add : 200+100 -> 44 (exp 44)  | PASS
+  sub : 10-25   -> 241 (exp 241) | PASS
+  and : F0&0F   -> 00 (exp 00) | PASS
+  or  : F0|0F   -> ff (exp FF) | PASS
+
+=== PART (c): alu -- grid, 6 x 6 operands x 4 ops = 144 cases ===
+  alu grid: 144/144 cases correct | PASS
+
+=== SUMMARY ===
+  part (a) mux2     : PASS
+  part (a) mux4     : PASS
+  part (b) mux4_bus : PASS
+  part (c) alu      : PASS
+task1/tb_task1.v:149: $finish called at 256 (1ns)

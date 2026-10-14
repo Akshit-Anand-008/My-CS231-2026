@@ -1,0 +1,183 @@
+VCD info: dumpfile task3.vcd opened for output.
+
+================ PART A ================
+  floor=3 up=1 dn=0 -> next=4 (exp 4) | [1;32mPASS[0m
+  floor=3 up=0 dn=1 -> next=2 (exp 2) | [1;32mPASS[0m
+  floor=3 up=0 dn=0 -> next=3 (exp 3) | [1;32mPASS[0m
+  floor=3 up=1 dn=1 -> next=3 (exp 3) | [1;32mPASS[0m
+  floor=7 up=1 dn=0 -> next=7 (exp 7) | [1;32mPASS[0m
+  floor=1 up=0 dn=1 -> next=1 (exp 1) | [1;32mPASS[0m
+  floor=6 up=1 dn=0 -> next=7 (exp 7) | [1;32mPASS[0m
+  floor=2 up=0 dn=1 -> next=1 (exp 1) | [1;32mPASS[0m
+  PART A: [1;32mPASS[0m
+
+================ PART B ================
+
+---- RUN 1: reset ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t=  56 | MOVING_DN  floor=5 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t=  66 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=  76 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+  [1;33m[Test Item 1][0m reset #1 | [1;32mPASS[0m
+t=  86 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=  96 | MOVING_UP  floor=4 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+  [1;33m[Test Item 1][0m reset #2 | [1;32mPASS[0m
+
+---- RUN 2: start trip from IDLE ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t= 116 | MOVING_UP  floor=4 up=1 dn=0 door=0 | int=0 ext=6 jg=00
+  [1;33m[Test Item 8][0m optimization #1 | [1;32mPASS[0m
+  [1;33m[Test Item 2][0m start #1 | [1;32mPASS[0m
+t= 126 | MOVING_UP  floor=5 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t= 136 | MOVING_DN  floor=4 up=0 dn=1 door=0 | int=1 ext=0 jg=00
+  [1;33m[Test Item 8][0m optimization #2 | [1;32mPASS[0m
+  [1;33m[Test Item 2][0m start #2 | [1;32mPASS[0m
+
+---- RUN 3: arrive at target ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t= 156 | DOOR_OPEN  floor=5 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+  [1;33m[Test Item 3][0m arrive #1 | [1;32mPASS[0m
+  [1;33m[Test Item 5][0m target clear | [1;32mPASS[0m
+t= 166 | DOOR_OPEN  floor=5 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 176 | DOOR_OPEN  floor=5 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 186 | DOOR_OPEN  floor=5 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 196 | IDLE       floor=5 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+  [1;33m[Test Item 4][0m door timing | [1;32mPASS[0m
+t= 206 | IDLE       floor=5 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 216 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+  [1;33m[Test Item 3][0m arrive #2 | [1;32mPASS[0m
+t= 226 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 236 | DOOR_OPEN  floor=5 up=0 dn=0 door=1 | int=0 ext=5 jg=00
+  [1;33m[Test Item 3][0m arrive #3 | [1;32mPASS[0m
+
+---- RUN 4: internal beats external ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t= 256 | MOVING_DN  floor=4 up=0 dn=1 door=0 | int=2 ext=5 jg=00
+  [1;33m[Test Item 6][0m priority | [1;32mPASS[0m
+
+---- RUN 5: request while busy ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t= 276 | MOVING_DN  floor=5 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 286 | MOVING_DN  floor=4 up=0 dn=1 door=0 | int=0 ext=7 jg=00
+  [1;33m[Test Item 7][0m latch #1 | [1;32mPASS[0m
+t= 296 | MOVING_DN  floor=3 up=0 dn=1 door=0 | int=0 ext=1 jg=00
+  [1;33m[Test Item 7][0m latch #2 | [1;32mPASS[0m
+t= 306 | MOVING_DN  floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 316 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 326 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 336 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 346 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 356 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+  [1;33m[Test Item 7][0m latch #3 | [1;32mPASS[0m
+t= 366 | MOVING_UP  floor=2 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+  [1;33m[Test Item 7][0m latch #4 | [1;32mPASS[0m
+
+---- RUN 6: long sequence ----
+TIME (1ns after posedge) | STATE/OUTPUTS (after that posedge) | INPUTS (at that posedge)
+-----------------------------------------------------------------------------------------
+t= 406 | MOVING_UP  floor=4 up=1 dn=0 door=0 | int=0 ext=6 jg=00
+t= 416 | MOVING_UP  floor=5 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t= 426 | MOVING_UP  floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 436 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 446 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 456 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 466 | DOOR_OPEN  floor=6 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 476 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 486 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 496 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 506 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 516 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 526 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 536 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 546 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 556 | IDLE       floor=6 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 566 | MOVING_DN  floor=6 up=0 dn=1 door=0 | int=2 ext=0 jg=00
+t= 576 | MOVING_DN  floor=5 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 586 | MOVING_DN  floor=4 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 596 | MOVING_DN  floor=3 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 606 | MOVING_DN  floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 616 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 626 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 636 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 646 | DOOR_OPEN  floor=2 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 656 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 666 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 676 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 686 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 696 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 706 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 716 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 726 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 736 | IDLE       floor=2 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 746 | MOVING_UP  floor=2 up=1 dn=0 door=0 | int=0 ext=7 jg=00
+t= 756 | MOVING_UP  floor=3 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t= 766 | MOVING_UP  floor=4 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t= 776 | MOVING_UP  floor=5 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t= 786 | MOVING_UP  floor=6 up=1 dn=0 door=0 | int=0 ext=0 jg=00
+t= 796 | MOVING_UP  floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 806 | DOOR_OPEN  floor=7 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 816 | DOOR_OPEN  floor=7 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 826 | DOOR_OPEN  floor=7 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 836 | DOOR_OPEN  floor=7 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t= 846 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 856 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 866 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 876 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 886 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 896 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 906 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 916 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 926 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 936 | IDLE       floor=7 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 946 | MOVING_DN  floor=7 up=0 dn=1 door=0 | int=3 ext=0 jg=00
+t= 956 | MOVING_DN  floor=6 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 966 | MOVING_DN  floor=5 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 976 | MOVING_DN  floor=4 up=0 dn=1 door=0 | int=0 ext=0 jg=00
+t= 986 | MOVING_DN  floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t= 996 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1006 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1016 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1026 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1036 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1046 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1056 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1066 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1076 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1086 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1096 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1106 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1116 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1126 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1136 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1146 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=3 jg=00
+t=1156 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1166 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1176 | DOOR_OPEN  floor=3 up=0 dn=0 door=1 | int=0 ext=0 jg=00
+t=1186 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1196 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1206 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1216 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1226 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1236 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+t=1246 | IDLE       floor=3 up=0 dn=0 door=0 | int=0 ext=0 jg=00
+  [1;33m[Test Item 9][0m seq: n=5 cap=00062733 (exp n=5 cap=00062733) bad=0 | [1;32mPASS[0m
+
+================ SUMMARY: PART A + B ================
+  PART A                             : [1;32mPASS[0m
+  [1;33m[Test Item 1][0m Reset                          : [1;32mPASS[0m
+  [1;33m[Test Item 2][0m IDLE -> UP/DOWN + move signals  : [1;32mPASS[0m
+  [1;33m[Test Item 3][0m Reach target -> DOOR_OPEN       : [1;32mPASS[0m
+  [1;33m[Test Item 4][0m Door opening timing             : [1;32mPASS[0m
+  [1;33m[Test Item 5][0m Target reset on door open       : [1;32mPASS[0m
+  [1;33m[Test Item 6][0m Internal request priority       : [1;32mPASS[0m
+  [1;33m[Test Item 7][0m Latching pending request (busy) : [1;32mPASS[0m
+  [1;33m[Test Item 8][0m Direct request optimization     : [1;32mPASS[0m
+  [1;33m[Test Item 9][0m Long sequence, multiple reqs    : [1;32mPASS[0m
+=====================================================
+
+############################################################################
