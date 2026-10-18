@@ -1,0 +1,14 @@
+# Task 2 changes (TODO). One block per change, in the order you made them.
+# A change that did not help also gets a block.
+
+== Change 1 ==
+what:
+why (the course idea it relies on):
+evidence (counter before -> after):
+time (before -> after):
+
+== Change 2 ==
+what:
+why:
+evidence:
+time:

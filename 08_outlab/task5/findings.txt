@@ -1,0 +1,34 @@
+# Task 5 findings (TODO). Short notes, written BEFORE you change any code.
+
+==================== packets, history_cols = 128 ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./packets.out 128
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./packets.out 128   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+
+==================== packets, history_cols = 2048 ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./packets.out 2048
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./packets.out 2048   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+

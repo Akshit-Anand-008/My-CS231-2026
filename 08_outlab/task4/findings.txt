@@ -1,0 +1,24 @@
+# Task 4 findings (TODO). Short notes, written BEFORE you change any code.
+
+==================== grid_bfs ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./grid_bfs.out
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./grid_bfs.out   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+
+==================== Memory ====================
+
+time ./grid_bfs.out (real, user, sys):
+page-faults =
+what asks for fresh memory (function and line) =
+valgrind --leak-check=full ./grid_bfs.out --small: bytes definitely lost, and the line =

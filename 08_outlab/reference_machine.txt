@@ -1,0 +1,50 @@
+Reference machines for 08_outlab
+================================
+
+Every time, speedup and perf count quoted in the problem statement comes from machine A,
+unless it says "SL". Your numbers will differ: a different CPU, cache size or compiler changes
+them. Compare ratios (base vs fixed, before vs after) on your own machine, not absolute times.
+Print your own machine the same way with:  make sysinfo
+
+Per-core cache size = total / instances (e.g. L2 8 MiB over 8 instances = 1 MiB per core).
+All runs: built by the makefiles in this folder, pinned with taskset -c 1, nothing else running.
+
+A. Author laptop (reference numbers)
+------------------------------------
+cpu:        AMD Ryzen 7 7840HS w/ Radeon 780M Graphics
+cores:      8 cores, 16 hardware threads
+max clock:  5137 MHz
+governor:   powersave
+L1d:        256 KiB (8 instances)
+L1i:        256 KiB (8 instances)
+L2:         8 MiB (8 instances)
+L3:         16 MiB (1 instance)
+simd:       avx avx2 avx512f fma sse2 
+memory:     14 GiB
+os:         Ubuntu 24.04.5 LTS, kernel 7.0.0-34-generic
+compiler:   g++-13 (g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0)
+perf:       perf version 7.0.14
+valgrind:   valgrind-3.22.0
+paranoid:   kernel.perf_event_paranoid = 1
+
+B. Software Lab machine sl1-7 (CS231@sl1-7.cse.iitb.ac.in), checked against A
+--------------------------------------------------------------------------------
+cpu:        AMD Ryzen 7 5700G with Radeon Graphics
+cores:      8 cores, 16 hardware threads
+max clock:  4673 MHz
+governor:   powersave
+L1d:        256 KiB (8 instances)
+L1i:        256 KiB (8 instances)
+L2:         4 MiB (8 instances)
+L3:         16 MiB (1 instance)
+simd:       avx avx2 fma sse2 
+memory:     14 GiB
+os:         Ubuntu 24.04.5 LTS, kernel 7.0.0-34-generic
+compiler:   g++-13 (g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0)
+perf:       perf version 7.0.14
+valgrind:   valgrind-3.22.0
+paranoid:   kernel.perf_event_paranoid = 0
+
+Differences that matter in this lab: A has AVX-512 and a 1 MiB L2 per core; B has no AVX-512
+and a 512 KiB L2 per core. Both are AMD: perf record cannot use the :pp modifier with
+branch-misses on either.

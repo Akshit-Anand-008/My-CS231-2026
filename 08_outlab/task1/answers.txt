@@ -1,0 +1,19 @@
+# Task 1 answers (TODO). Short notes, with numbers from your own machine.
+
+# ---- Part A: gzip ----
+A1 ipc =
+A1 branch miss rate (%) =
+A1 busy or waiting? =
+A2 does the time change between runs? =
+A3 what explains gzip -9 being slower (instructions or IPC)? =
+A4 why does the report show addresses, not names? =
+
+# ---- Part B: heat simulation ----
+# time (ms), instructions, L1 misses and IPC of each program
+B1 heat_base   =
+B1 heat_lookup =
+B1 heat_fixed  =
+B1 FIX 2 reduces which counter? =
+B1 FIX 1 reduces which counter? =
+B1 highest IPC is which program, and is it the fastest? =
+B2 function with the most time, and the code line it matches =

@@ -1,0 +1,34 @@
+# Task 2 findings (TODO). Short notes, written BEFORE you change any code.
+
+==================== Program A: repeated_array ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./repeated_array.out naive
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./repeated_array.out naive   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+
+==================== Program B: weird_matrix ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./weird_matrix.out naive
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./weird_matrix.out naive   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+

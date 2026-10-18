@@ -1,0 +1,34 @@
+# Task 3 findings (TODO). Short notes, written BEFORE you change any code.
+
+==================== Program A: mask ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./mask.out naive
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./mask.out naive   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+
+==================== Program B: outer, convolve, weirdMul ====================
+
+perf stat: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./naive.out nocheck
+PASTE:
+
+ipc =
+branch miss rate (%) =
+L1 miss rate (%) =
+
+perf record: taskset -c 1 perf record -g ./naive.out nocheck   then   perf report --stdio --no-children --sort sym -g none
+PASTE the top 5 lines:
+
+top function and its self % =
+cause (stride/cache | branch misprediction | dependency chain | function call | allocation | wasteful work | data too big for cache | not SIMD) =
+the number or code line that shows it =
+
