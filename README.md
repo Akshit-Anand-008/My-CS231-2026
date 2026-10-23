@@ -90,28 +90,30 @@
       <td>09 October</td>
       <td> <a href=""> </a> </td>
     </tr>
-    <!-- Block 5: 1 Row (Quiz) -->
-    <tr>
-      <td>--</td>
-      <td>16 October</td>
-      <td colspan="3"><strong>Lab Quiz 2</strong></td>
-    </tr>
-    <!-- Block 6: 3 Rows -->
+    <!-- Block 5: 2 Rows -->
     <tr>
       <td>9</td>
-      <td>23 October</td>
-      <td rowspan="3">Champ-Sim</td>
-      <!-- <td rowspan="3">Champ-Sim Resources</td> -->
+      <td>16 October</td>
+      <td rowspan="2">Champ-Sim</td>
+      <!-- <td rowspan="2">Champ-Sim Resources</td> -->
       <td> <a href=""> </a> </td>
     </tr>
     <tr>
       <td>10</td>
-      <td>30 October</td>
+      <td>23 October</td>
       <td> <a href=""> </a> </td>
     </tr>
+    <!-- Block 6: 1 Row (Quiz) -->
+    <tr>
+      <td>--</td>
+      <td>30 October</td>
+      <td colspan="3"><strong>Lab Quiz 2</strong></td>
+    </tr>
+    <!-- Block 7: 1 Row -->
     <tr>
       <td>11</td>
       <td>06 November</td>
+      <td>Champ-Sim</td>
       <td> <a href=""> </a> </td>
     </tr>
     <!-- Quiz 3 -->
