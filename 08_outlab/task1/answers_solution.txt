@@ -1,0 +1,27 @@
+# Task 1 reference answers (NOT SHIPPED). Machine A in reference_machine.txt, taskset -c 1.
+# Numbers vary by machine and run: check they are the right size, and read the reasoning.
+
+# ---- Part A: gzip ----
+A1 ipc = 2.37
+## Hint: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses gzip -c task1/input.txt > /dev/null. ipc = instructions / cycles; miss rate = branch-misses / branches x 100.
+A1 branch miss rate (%) = 0.13
+A1 busy or waiting? = busy: IPC above 2 and almost no branch misses, so it is not waiting on memory or the predictor
+A2 does the time change between runs? = under 1% (+- 0.9%), so one pinned run is representative
+## Hint: same command with -r 5 after perf stat. Read the "( +- x% )" at the end of the task-clock line.
+A3 what explains gzip -9 being slower (instructions or IPC)? = instructions: -9 runs 4.3x more (IPC 2.63 -> 2.06), so 5.3x the time; the output is only 3.6% smaller
+## Hint: same command with gzip -1 and gzip -9. Compare the instructions line and the IPC of the two runs; time ratio = instruction ratio x (IPC of -1 / IPC of -9).
+A4 why does the report show addresses, not names? = the system gzip is stripped (no symbol table); our programs are built with -g
+## Hint: taskset -c 1 perf record -g gzip -c task1/input.txt > /dev/null, then perf report --stdio --no-children --sort sym -g none. Look at the symbol column: hex addresses, no names.
+
+# ---- Part B: heat simulation ----
+# time (ms), instructions, L1 misses and IPC of each program
+B1 heat_base   = 4055 ms, 51.6 G, 177 M, 2.69
+B1 heat_lookup = 659 ms, 4.96 G, 219 M, 1.55
+B1 heat_fixed  = 355 ms, 4.95 G, 24 M, 2.89
+## Hint: make heat_base.out heat_lookup.out heat_fixed.out, then taskset -c 1 perf stat -e task-clock,cycles,instructions,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./heat_base.out (and the other two). Compare the task-clock, instructions and L1-dcache-load-misses lines.
+B1 FIX 2 reduces which counter? = instructions (10x fewer; L1 misses unchanged)
+B1 FIX 1 reduces which counter? = L1 misses (9x fewer; instructions unchanged)
+B1 highest IPC is which program, and is it the fastest? = heat_fixed, and yes. But heat_base has a higher IPC than heat_lookup and is 6x slower: IPC shows how busy the core is, not how much useful work it does
+## Hint: IPC is the "insn per cycle" value next to the instructions line. Compare it with the task-clock line.
+B2 function with the most time, and the code line it matches = std::find (and its iterators, operator==) is about 63% with children, main itself 7%; all from the std::find line in the inner loop (line 52)
+## Hint: taskset -c 1 perf record -g ./heat_base.out, then perf report --stdio --children --sort sym -g none. Read the first column of main and of the rows with std::find< in the name. The source line: grep -n "std::find" task1/heat_base.cpp.

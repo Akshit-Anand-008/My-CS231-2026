@@ -1,0 +1,46 @@
+# Task 3 changes: REFERENCE (not shipped). Machine A, taskset -c 1. Times are the programs' own timers.
+# Naive times: mask layer 1 + 2 = 232 ms; outer 135 ms, convolve 1252 ms, weirdMul 357 ms.
+
+== Change 1 ==
+what: [mask] take plain pointers once (w = layer1CellWeights[i]->element(0), x = input.element(0)) and index w[j], x[j]
+why: function call overhead: at -O0 every element() call is a real call
+evidence: same scalar loop, no SIMD yet
+time: 1.7x faster than naive (5 runs: 1.67-1.75x)
+## Hint: perf stat -e instructions ./mask.out naive, then ./mask.out yours; the instructions line drops. perf report on mask.out shows less time in element().
+
+== Change 2 ==
+what: [mask] layer 1 with __m128d: _mm_mul_pd, _mm_max_pd against zero, _mm_add_pd into an accumulator, add the 2 lanes at
+      the end; layer 2 loads y[i..i+1] and y[i-1..i] (one element back), leftover term done in plain C++
+why: SIMD lanes (Lab 8 Task 4): 2 doubles per SSE2 instruction; leftovers when the count is not a multiple of 2
+evidence: perf stat naive vs yours mode: instructions 4.81 G -> 3.56 G for the whole run (set-up included)
+time: 6.5x faster than naive (SSE2); optional AVX 11x, AVX-512 14x
+## Hint: make task3-check prints PASS for mask; make mask prints both times. If it fails, run ./mask.out yours alone.
+
+== Change 3 ==
+what: [outer] broadcast a[i][j] with _mm_set1_pd, multiply a row of b 2 at a time, store into the result row
+why: SIMD lanes
+evidence: time barely moves with width (SSE2 59 ms, AVX 63 ms, AVX-512 60 ms)
+time: 135 ms -> 59 ms (2.3x)
+## Why it stops there: the result is 63^4 doubles = 126 MB written once. Writing new memory (and the page faults
+## for it) costs more than the multiplies. Same lesson as Lab 8 "Why not 4x? Part 2: memory".
+
+== Change 4 ==
+what: [convolve] compute 2 neighbouring outputs res[i][j], res[i][j+1] together: for each kernel value b[k][l], broadcast it and
+      multiply by 2 neighbouring inputs loaded with _mm_loadu_pd; leftover columns with the plain loop
+why: SIMD lanes; each lane adds its terms in the same order as naive, so results match exactly
+evidence: after changes 3-5, instructions for all three functions (nocheck runs): 29.2 G -> 6.2 G
+time: 1252 ms -> 541 ms (2.3x); optional AVX 301 ms, AVX-512 184 ms
+## Hint: make naive and make optim each print "Convolution Time"; compare them. make task3-check says which element is wrong.
+
+== Change 5 ==
+what: [weirdMul] ikj loop order: for each i, k compute f = a[i][k] > 0.5 ? a[i][k] : a[i][k] - 1, broadcast it, and add f * b[k][j..]
+      into res[i][j..], 2 at a time
+why: row-major order (Lab 8 Task 2) so b and res are read along rows, then SIMD lanes on those rows
+evidence: naive reads b down a column (stride 3.2 KB); now every access is along a row
+time: 357 ms -> 99 ms (3.6x); optional AVX 52 ms, AVX-512 44 ms
+## Hint: make naive and make optim print "Weird Multiplication Time". perf stat -e L1-dcache-load-misses ./optim.out nocheck shows the misses.
+
+== Summary ==
+total: mask 6.5x; outer 2.3x; convolve 2.3x; weirdMul 3.6x (SSE2)
+biggest win: change 2 (mask) and change 5 (weirdMul: loop order plus SIMD)
+did not help: wider registers for outer (memory bound, see change 3)

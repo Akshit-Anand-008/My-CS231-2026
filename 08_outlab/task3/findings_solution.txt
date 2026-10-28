@@ -1,0 +1,86 @@
+# Task 3 findings: REFERENCE (not shipped). Machine A in reference_machine.txt, taskset -c 1.
+
+== Machine ==
+cpu: AMD Ryzen 7 7840HS (sse2, avx, avx2, fma, avx512f), L1d 32 KiB/core, L2 1 MiB/core, L3 16 MiB, g++-13
+
+==================== Program A: mask ====================
+
+== A1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./mask.out naive
+            471.87 msec task-clock
+     2,219,942,399      cycles
+     4,811,733,403      instructions
+       762,459,817      branches
+        11,305,107      branch-misses
+     2,008,966,871      L1-dcache-loads
+        10,743,017      L1-dcache-load-misses
+
+ipc = 2.17
+branch_miss_pct = 1.48
+l1_miss_pct = 0.53
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); read the instructions, branch-misses and L1-dcache-load-misses lines. Nothing high among the misses means the cost is the instruction count.
+
+== A2. Hotspots ==
+command: taskset -c 1 perf record -g ./mask.out naive ; perf report --stdio --no-children --sort sym -g none
+## Hint: run the command above, then read the top rows of the first column (self %). Add --children for totals including callees. Rows like __random belong to the set-up.
+    29.91%  [.] main
+    27.61%  [.] __random
+    11.63%  [.] vector::element(unsigned long)
+     7.41%  [.] double const& std::max<double>(double const&, double const&)
+hotspot 1: main self 29.9%
+hotspot 2: __random self 27.6%   <- set-up (rand() filling the weights), not the timed part
+hotspot 3: vector::element self 11.6%
+## Expected insight: over a third of the run is set-up (__random, __random_r, rand: 27.6 + 7.5 + 3.4%). Compare "naive" and "yours" runs, which share the set-up.
+
+== A3. One level deeper ==
+command: perf annotate --stdio -l -M intel main   (on the same perf.data)
+## Hint: perf annotate --stdio -l -M intel main; read the source lines with the largest % in the first column.
+   54.73 mask.cpp:60      layer1Outs += max(0.0, w * x) via three element() calls and a std::max call
+   26.78 mask.cpp:41      set-up: filling the weights with rand()
+## Line 60 is the naive layer-1 inner loop: calls to element() and std::max around one scalar mulsd/addsd.
+
+== A4. Diagnosis ==
+hotspot 1: cause = not SIMD because each iteration does one multiply on one double; 2 (SSE2) fit in one xmm register
+hotspot 3: cause = function call overhead because at -O0 every element() and std::max is a real call (12% + 7% self)
+## Hint: the evidence is perf stat (no miss problem, many instructions) and the source line from the annotate output.
+
+==================== Program B: outer, convolve, weirdMul (baseline: naive.out) ====================
+
+== B1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e ... ./naive.out nocheck
+          1,923.45 msec task-clock
+     9,027,208,828      cycles
+    29,203,752,328      instructions
+     1,997,301,276      branches
+         4,577,521      branch-misses
+    11,427,413,163      L1-dcache-loads
+       102,869,392      L1-dcache-load-misses
+
+ipc = 3.23
+branch_miss_pct = 0.23
+l1_miss_pct = 0.90
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); the program is naive.out nocheck, so only the three functions are counted.
+
+== B2. Hotspots ==
+command: taskset -c 1 perf record -g ./naive.out nocheck ; perf report --stdio --no-children --sort sym -g none
+## Hint: run the command above, then read the top rows of the first column (self %). Add --children for totals including callees. With --children each of the three functions shows its total.
+    42.95%  [.] matrix::element(unsigned long, unsigned long)
+    41.59%  [.] convolve(matrix*, matrix*)
+     9.48%  [.] weirdMul(matrix*, matrix*)
+     2.73%  [.] outer(matrix*, matrix*)
+with --children: convolve 68.1%, weirdMul 21.2%, outer 8.0%
+hotspot 1: matrix::element self 43.0% (called from all three)
+hotspot 2: convolve self 41.6%, 68.1% with children
+hotspot 3: weirdMul self 9.5%, 21.2% with children
+
+== B3. One level deeper ==
+## Hint: read the source of naive.cpp, or perf annotate --stdio -l -M intel convolve; look at how many element() calls sit in the inner loop.
+## convolve: 479^2 outputs x 33^2 terms = 250 M multiply-adds, each with two element() calls (500 M calls).
+## weirdMul: inner loop over k reads b[k][j] down a column (stride 401 doubles = 3.2 KB).
+
+== B4. Diagnosis ==
+hotspot 1: cause = function call overhead because element() is a real call per access at -O0 (43% self)
+hotspot 2: cause = not SIMD because neighbouring outputs res[i][j], res[i][j+1] use the same kernel value and
+           neighbouring inputs: 2 (SSE2) outputs per instruction are possible
+hotspot 3: cause = stride/cache misses (b down a column) and not SIMD
+## Hint: the evidence is the matrix::element row in perf report and the calls in the code.

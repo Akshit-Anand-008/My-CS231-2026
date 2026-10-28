@@ -1,0 +1,42 @@
+# Task 2 changes: REFERENCE (not shipped). Machine A, taskset -c 1.
+# All times are the program's own time_ms for the part that ran (naive mode / yours mode); the set-up is not included.
+# Counters are perf stat of the whole run, set-up included.
+
+== Change 1 ==
+what: [repeated_array, inner loop] replaced the if/else with sign = 2 * (v > N/2) - 1; accum += i * v * sign
+why: branch prediction; branchless code computes both cases with arithmetic, nothing to guess (Lab 8 Task 3)
+evidence: branch-misses 334 M (naive) -> 0.41 M (yours); IPC 1.32 -> 3.43; instructions 17.3 G -> 18.9 G (more, but no stalls)
+time: 2659 ms -> 1140 ms (2.3x)
+## Hint: make repeated_array prints PASS and the speedup. Then taskset -c 1 perf stat -e branch-misses,instructions ./repeated_array.out naive, and the same with yours. Compare the branch-misses lines.
+
+== Change 2 ==
+what: [repeated_array] tried a local int accumulator instead of the volatile global, copied into accum at the end
+why: loop-carried dependency through memory (store then load every iteration)
+evidence: time only (5 runs each): 1155-1167 ms -> 1108-1125 ms
+time: 1160 ms -> 1120 ms (1.04x)
+## Barely helps because at -O0 a local variable also lives on the stack: the same store/load chain each iteration.
+## (The small gain: a stack slot is cheaper to address than a volatile global.)
+## At -O2 the local would sit in a register; that is the version to show as an aside.
+
+== Change 3 ==
+what: [weird_matrix] copy each column that the dot products walk into a row of a plain (non-volatile) array once (P1, T2, T1, P2),
+      then run the same dot products over those rows
+why: row-major layout and stride (Lab 8 Task 2): walk along rows so 16 ints share each cache line
+evidence: L1-dcache-load-misses 1848 M -> 80 M; instructions 31.2 G -> 23.3 G (no volatile reads in the hot loop)
+time: 2565 ms -> 1221 ms (2.1x)
+## Hint: make weird_matrix prints PASS. Then perf stat -e L1-dcache-load-misses,instructions on ./weird_matrix.out naive and yours; compare the L1 line.
+
+== Change 4 ==
+what: [weird_matrix] take row pointers x = P1[i], y = T2[c] before the k loop and index x[k] * y[k]
+why: fewer instructions per iteration: at -O0 every P1[i][k] recomputes i * N + k
+evidence: instructions 23.3 G -> 17.3 G; L1 misses unchanged (80 M)
+time: 1221 ms -> 1003 ms (1.22x)
+## Hint: perf stat -e instructions on ./weird_matrix.out yours before and after the change.
+
+== Summary ==
+total: repeated_array 2659 -> 1140 ms (2.3x); weird_matrix 2565 -> 1003 ms (2.6x)
+biggest win: change 1 for repeated_array (misses gone), change 3 for weird_matrix (L1 misses 23x fewer)
+did not help (much): change 2, 3% (see note)
+## Advanced, not expected: in weird_matrix ~38% of arr values repeat (615 distinct values out of 1000), so the dot product for (i, c) is computed
+## more than once. Counting how often each c appears and computing each (i, c) once cuts the work by that much.
+## That is an algorithm change, allowed here, but not the point of the task.

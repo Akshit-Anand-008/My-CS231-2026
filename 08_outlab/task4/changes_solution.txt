@@ -1,0 +1,35 @@
+# Task 4 changes: REFERENCE (not shipped). Machine A, taskset -c 1, perf stat -r 3 task-clock (varies ~10% between sessions).
+# Each change is applied on top of the previous one.
+
+== Change 1 ==
+what: [compute_congestion_pressure] swapped the loops: row outside, col inside
+why: row-major layout (Lab 8 Task 2): index = row * cols + col, so stepping col moves 4 bytes and 16 cells share a line
+evidence: L1-dcache-load-misses 1063 M -> 253 M
+time: 1892 ms -> 1820 ms (1.04x)
+## Hint: taskset -c 1 perf stat -r 3 -e task-clock,L1-dcache-load-misses ./grid_bfs.out before and after; compare the L1 line and task-clock.
+## Much smaller than the miss count suggests: each array is 270 KB, so it stays in the 1 MB L2 and the prefetcher
+## follows the fixed stride, so the L1 misses are cheap. The statement warns that some changes gain little.
+
+== Change 2 ==
+what: [next_pressure_value] made it static, so g++ -O2 inlines it into the congestion loop
+why: function call overhead; inlining removes the call and lets the compiler optimise the loop as one piece
+evidence: instructions 23.1 G -> 13.5 G
+time: 1820 ms -> 1253 ms (1.45x)
+## Hint: perf stat -r 3 -e task-clock,instructions ./grid_bfs.out; the instructions line drops. perf report no longer lists next_pressure_value.
+
+== Change 3 ==
+what: [shortest_path_bfs] distance, visited and frontier are static vectors, allocated once and reset with assign() at each call
+why: allocation cost: fresh memory means page faults (kernel work); also fixes the leak
+evidence: page-faults 99,596 -> 650; sys time 0.14 s -> 0.00 s
+time: 1253 ms -> 1158 ms (1.08x)
+## Hint: perf stat -e page-faults ./grid_bfs.out and time ./grid_bfs.out (sys). Then valgrind --leak-check=full ./grid_bfs.out --small must print "All heap blocks were freed". make task4-check must still PASS.
+## Small time gain: the reset still writes 338 KB per call. The point is the leak and the page faults.
+
+== Summary ==
+total: 1892 ms -> 1158 ms (1.63x)
+biggest win: change 2 (inlining); change 1 cut L1 misses 4x but gained only 4% in time
+did not help (much): a flat char array for the grid instead of vector<string> (1.12 s -> 1.09 s): the grid is 67 KB,
+              always in L1/L2, so the extra pointer hop costs little.
+## Advanced (outside the course): the bootcamp reference reaches ~0.88 s with uint16_t distances, blocked cells encoded
+## in the distance array (one load instead of two), unsigned bounds checks, a flat frontier of ints, and a congestion
+## loop simple enough for the compiler to vectorise (-fopt-info-vec shows it). Kept in .notes_08_outlab/grid_bfs_535306a.cpp.

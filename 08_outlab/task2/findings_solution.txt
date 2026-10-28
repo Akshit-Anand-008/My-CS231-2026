@@ -1,0 +1,78 @@
+# Task 2 findings: REFERENCE (not shipped). Machine A in reference_machine.txt, taskset -c 1.
+# Grade the reasoning; numbers differ per machine.
+
+== Machine ==
+cpu: AMD Ryzen 7 7840HS, L1d 32 KiB/core, L2 1 MiB/core, L3 16 MiB, g++-13, perf 7.0.14
+
+==================== Program A: repeated_array ====================
+
+== A1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./repeated_array.out naive
+          2,694.07 msec task-clock
+    13,089,133,768      cycles
+    17,340,868,651      instructions
+     1,975,463,248      branches
+       334,198,445      branch-misses
+     6,566,895,544      L1-dcache-loads
+        50,250,786      L1-dcache-load-misses
+
+ipc = 1.32
+branch_miss_pct = 16.9
+l1_miss_pct = 0.77
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); branch miss rate = branch-misses / branches x 100. Read the branch-misses line.
+
+== A2. Hotspots ==
+command: taskset -c 1 perf record -g ./repeated_array.out naive
+command: perf report --stdio --no-children --sort sym -g none
+## Hint: run the command above, then read the top rows of the first column (self %). Add --children for totals including callees. Only main shows, so go one level deeper (A3).
+    99.31%  [.] main
+hotspot 1: main self 99.3%   (everything is in main, so go one level deeper)
+
+== A3. One level deeper ==
+command: taskset -c 1 perf record -e branch-misses ./repeated_array.out naive ; perf annotate --stdio -l -M intel main
+## Hint: in the annotate output, the source lines are listed with their % in the first column; read the largest ones.
+   34.43 repeated_array.cpp:44      accum -= i * arr[j];
+   33.25 repeated_array.cpp:41      accum += i * arr[j];
+   21.00 repeated_array.cpp:40      if (arr[j] > N / 2) {
+## The misses are charged to the first instructions after the mispredicted jump, i.e. the two bodies of the if.
+
+== A4. Diagnosis ==
+hotspot 1: cause = branch misprediction because arr[j] > N/2 is random (~50/50), branch-misses = 42% of the ifs,
+           and the samples sit on the if and its two bodies. Lab 8 Task 3: ~20 cycles lost per wrong guess.
+## Note for TAs: with N = 15000 (2025 version) Zen 3/4 memorised the pattern (0.04% misses). N = 131072 is too long to memorise.
+## Hint: the evidence is the branch-misses line of perf stat (compare with the branches line).
+
+==================== Program B: weird_matrix ====================
+
+== B1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e ... ./weird_matrix.out naive
+          2,707.51 msec task-clock
+    12,919,252,615      cycles
+    31,233,447,127      instructions
+     1,043,932,933      branches
+         2,602,053      branch-misses
+     6,078,660,513      L1-dcache-loads
+     1,848,299,350      L1-dcache-load-misses
+
+ipc = 2.42
+branch_miss_pct = 0.25
+l1_miss_pct = 30.4
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); L1 miss rate = L1-dcache-load-misses / L1-dcache-loads x 100. Read the L1-dcache-load-misses line.
+
+== B2. Hotspots ==
+    99.01%  [.] main
+hotspot 1: main self 99.0%
+## Hint: run the command above, then read the top rows of the first column (self %). Add --children for totals including callees. Only main shows again.
+
+== B3. One level deeper ==
+command: taskset -c 1 perf record -e L1-dcache-load-misses -c 10000 ./weird_matrix.out naive ; perf annotate --stdio -l -M intel main
+## Hint: use -c 10000 as in the command, then read the annotate lines with the largest % in the first column; both are the dot-product lines.
+   44.18 weird_matrix.cpp:50       dotP += m1[arr[k]][i] * m2[k][arr[j]];
+   35.74 weird_matrix.cpp:58       dotP += m1[k][arr[j]] * m2[arr[k]][i];
+
+== B4. Diagnosis ==
+hotspot 1: cause = stride/cache misses because the inner loop is over k and k picks the ROW (m2[k][..], m1[k][..],
+           m1[arr[k]][..], m2[arr[k]][..]): every read is a different row, 4000 bytes away, a new cache line each time.
+hotspot 2: cause = wasteful work because the matrices are volatile, so every read is a real load and
+           -O0 recomputes each 2-D address; 31 G instructions for 1 G multiply-adds.
+## Hint: the evidence is the L1-dcache-load-misses line of perf stat and the annotate lines.

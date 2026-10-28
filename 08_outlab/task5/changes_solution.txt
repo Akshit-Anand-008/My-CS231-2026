@@ -1,0 +1,43 @@
+# Task 5 changes: REFERENCE (not shipped). Machine A, taskset -c 1, perf stat -r 5; times are task-clock.
+# Each change is applied on top of the previous one. Function signatures, call sites and build_* are unchanged.
+
+== Change 1 ==
+what: [cold_column_probe] visit every cell row by row (row outside, col inside); the starting column no longer matters
+why: row-major order and stride (Lab 8 Task 2). The function only adds history[..] & 31 over all cells, and a sum
+         does not depend on the order, so the result is identical
+evidence: 2048 cols: L1-dcache-load-misses 366 M -> 127 M; 128 cols: 109 M -> 94 M
+time: 2048 cols 2533 ms -> 482 ms (5.3x); 128 cols 211 ms -> 199 ms (1.06x)
+## Hint: make task5-check prints PASS for both sizes. perf stat -r 5 -e task-clock,L1-dcache-load-misses ./packets.out 2048 before and after.
+
+== Change 2 ==
+what: [chase_dependency + main] in main, before the epochs, compute for every start index the total of the 7-step walk (dependency_total);
+      pass that vector as the `value` argument and make chase_dependency return value[start & mask]
+why: dependency chain / pointer chasing (Lab 8 Task 1): 7 dependent random loads become 1 independent load.
+         The walk from a given start never changes (STEPS is the constant 7), so it is computed once, not once per call (up to 6.6 M calls)
+evidence: 128 cols: L1-dcache-load-misses 94 M -> 21 M; cycles 966 M -> 543 M
+time: 128 cols 199 ms -> 112 ms (1.8x); 2048 cols 482 ms -> 373 ms (1.3x)
+## Hint: perf stat -r 5 -e task-clock,L1-dcache-load-misses ./packets.out 128 before and after; the L1 line drops. perf report no longer shows chase_dependency at the top.
+## The task allows passing "a different variable of the same type", which is how dependency_total reaches the function.
+
+== Change 3 ==
+what: [branchy_score] each if/else becomes b = (x & bit) != 0 and score = b * then_value + (1 - b) * else_value
+why: branch prediction / branchless code (Lab 8 Task 3)
+evidence: branch-misses 14.6 M -> 1.3 M (128 cols); instructions 793 M -> 1081 M (more instructions, no stalls)
+time: 128 cols 112 ms -> 73 ms (1.5x); 2048 cols 373 ms -> 327 ms (1.14x)
+## Hint: perf stat -r 5 -e task-clock,branch-misses ./packets.out 128 before and after; read the branch-misses line.
+
+== Change 4 ==
+what: [process_packets] compute both chase_dependency(...) and lane_weight[p.lane] and select with c * a + (1 - c) * b
+why: branchless code: after change 2 both sides are one load, cheaper than a 1-in-8 random branch
+evidence: branch-misses 1.3 M -> 0.48 M (128 cols)
+time: 128 cols 73 ms -> 70 ms (1.04x); 2048 cols 327 ms -> 325 ms
+## Hint: same perf stat as the previous change; the gain is small.
+
+== Summary ==
+total: 128 cols 211 ms -> 70 ms (3.0x); 2048 cols 2533 ms -> 325 ms (7.8x)
+biggest win: change 1 at 2048 columns, changes 2 and 3 at 128 columns. Which hotspot matters depends on the data size.
+did not help: (nothing tried that failed in this reference)
+## Advanced (outside the course), from the bootcamp reference (.notes_08_outlab/packets_535306a.cpp):
+## history_cols is a power of two, so p.stamp % history_cols can be p.stamp & (history_cols - 1) (no division);
+## a template parameter or constexpr for history_cols lets the compiler do that itself; __restrict__ pointers and
+## mask selects (-(cond) & a) instead of multiplies. That version changes signatures, which this task does not allow.

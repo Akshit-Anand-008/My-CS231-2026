@@ -1,0 +1,57 @@
+# Task 4 findings: REFERENCE (not shipped). Machine A in reference_machine.txt, taskset -c 1.
+
+== Machine ==
+cpu: AMD Ryzen 7 7840HS, L1d 32 KiB/core, L2 1 MiB/core, L3 16 MiB, g++-13 -O2 -g -fno-omit-frame-pointer
+
+==================== grid_bfs ====================
+
+== 1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./grid_bfs.out
+          1,857.47 msec task-clock
+     8,630,186,308      cycles
+    23,865,170,994      instructions
+     2,468,638,134      branches
+        98,114,787      branch-misses
+     8,441,542,447      L1-dcache-loads
+     1,063,744,643      L1-dcache-load-misses
+(time ./grid_bfs.out: user 1.73 s, sys 0.14 s)
+
+ipc = 2.77
+branch_miss_pct = 3.97
+l1_miss_pct = 12.6
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); read the L1-dcache-load-misses and page-faults lines. time ./grid_bfs.out shows the sys part.
+
+== 2. Hotspots ==
+command: taskset -c 1 perf record -g ./grid_bfs.out ; perf report --stdio --no-children --sort sym -g none
+## Hint: run the command above, then read the top rows of the first column (self %). Add --children for totals including callees. An inlined function has no row of its own.
+    41.92%  [.] next_pressure_value(int, int, int, int, int, int, int, int, int)
+    25.13%  [.] compute_congestion_pressure(...)
+    23.27%  [.] shortest_path_bfs(...)
+     0.94%  [k] kernel_init_pages
+     0.48%  [k] do_anonymous_page
+hotspot 1: next_pressure_value self 41.9%
+hotspot 2: compute_congestion_pressure self 25.1% (67% with children: it calls next_pressure_value)
+hotspot 3: shortest_path_bfs self 23.3%
+
+== 3. One level deeper ==
+command: taskset -c 1 perf record -e L1-dcache-load-misses -c 10000 ./grid_bfs.out ; perf report --stdio --no-children --sort sym -g none
+## Hint: same report command; this time the first column is the share of cache misses.
+    52.92%  [.] next_pressure_value(...)
+    28.15%  [.] compute_congestion_pressure(...)
+    17.39%  [.] shortest_path_bfs(...)
+## 81% of L1 misses are in the congestion pass. Many land in next_pressure_value although it only reads its
+## arguments: on AMD the sample lands a few instructions after the load that missed (skid), here across the call.
+## Reading compute_congestion_pressure: the inner loop runs over row, and index = row * cols + col, so each step
+## moves cols x 4 = 1040 bytes: a new cache line for every read of current, source and next.
+command: perf stat -e page-faults ./grid_bfs.out  ->  99,596 page faults
+## Hint: perf stat -e page-faults ./grid_bfs.out; then look in shortest_path_bfs for new, vector or string declared inside the function.
+## shortest_path_bfs calls new int[67600] and new unsigned char[67600] per request and never frees them:
+## 1200 x 338 KB = 400 MB of fresh pages (kernel_init_pages, do_anonymous_page in the profile) and a memory leak.
+
+== 4. Diagnosis ==
+hotspot 1: cause = function call overhead because next_pressure_value is a real call 272 M times (4096 passes x
+           258 x 258 cells), 9 arguments each, and it is 41.9% self on its own
+hotspot 2: cause = stride/cache misses because the congestion loop walks down columns of a row-major array
+           (L1 misses 1.06 G, 81% of them in this pass; cheap ones, the arrays fit in L2)
+hotspot 3: cause = allocation because each BFS call allocates (and leaks) 338 KB: 99,596 page faults, 0.14 s sys
+## Hint: the evidence is the self % row in perf report. For the leak run valgrind --leak-check=full ./grid_bfs.out --small and read the "definitely lost" line and the frames under it.

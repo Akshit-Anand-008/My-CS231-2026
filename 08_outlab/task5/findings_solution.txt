@@ -1,0 +1,92 @@
+# Task 5 findings: REFERENCE (not shipped). Machine A in reference_machine.txt, taskset -c 1.
+
+== Machine ==
+cpu: AMD Ryzen 7 7840HS, L1d 32 KiB/core, L2 1 MiB/core, L3 16 MiB, g++-13 -O2 -g -fno-omit-frame-pointer
+
+==================== Program A: packets, history_cols = 128 ====================
+
+== A1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e task-clock,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses ./packets.out 128
+            211.23 msec task-clock
+     1,024,349,490      cycles
+       978,634,701      instructions
+       152,162,345      branches
+        14,525,442      branch-misses
+       294,932,533      L1-dcache-loads
+       108,655,418      L1-dcache-load-misses
+
+ipc = 0.96
+branch_miss_pct = 9.5
+l1_miss_pct = 36.8
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); read the branch-misses and L1-dcache-load-misses lines.
+
+== A2. Hotspots ==
+command: taskset -c 1 perf record -g ./packets.out 128 ; perf report --stdio --no-children --sort sym -g none
+## Hint: run the command above, then read the top rows of the first column (self %). Add --children for totals including callees.
+    30.46%  [.] branchy_score(...)
+    24.11%  [.] chase_dependency(...)
+    22.34%  [.] process_packets(...)
+     9.69%  [.] cold_column_probe(...)
+     9.15%  [.] refresh_history(...)
+hotspot 1: branchy_score self 30.5%
+hotspot 2: chase_dependency self 24.1%
+hotspot 3: process_packets self 22.3%
+
+== A3. One level deeper ==
+command: taskset -c 1 perf record -e branch-misses ./packets.out 128 ; perf report --stdio --no-children --sort sym -g none
+## Hint: then perf report --stdio --no-children --sort sym -g none; the first column is the share of branch misses.
+    85.11%  [.] chase_dependency(...)
+     5.95%  [.] branchy_score(...)
+     5.65%  [.] process_packets(...)
+command: taskset -c 1 perf record -e L1-dcache-load-misses -c 10000 ./packets.out 128 ; (same report)
+    64.55%  [.] chase_dependency(...)
+    15.02%  [.] cold_column_probe(...)
+     8.62%  [.] refresh_history(...)
+## L1 misses: chase_dependency, as expected. idx = next[idx] seven times over a random permutation of 2^18 ints
+## (1 MB): every load is a random address and needs the previous one's value (Lab 8 Task 1, pointer chasing).
+## Branch misses: the report blames chase_dependency (85%), which has one predictable loop. This is skid: the sample
+## is taken a little after the mispredicted branch retires, and the code that runs right after branchy_score is the
+## call to chase_dependency. Experiments show the real sources: making branchy_score branchless cuts
+## branch-misses 14.6 M -> 1.3 M, making the process_packets select branchless cuts 1.3 M -> 0.48 M.
+## Expected insight: treat sampled event locations as a hint; confirm with a change and perf stat.
+
+== A4. Diagnosis ==
+hotspot 1: cause = branch misprediction because the six tests read random bits of x (confirmed by experiment, see A3)
+hotspot 2: cause = dependency chain because each of the 7 loads needs the value of the one before, at a random address
+hotspot 3: cause = branch misprediction because the chase-or-not test is random (1 in 8), plus the calls it makes
+## Hint: the evidence is the branch-misses line, and the change that confirms it (see changes).
+
+==================== Program B: packets, history_cols = 2048 ====================
+
+== B1. perf stat (whole program) ==
+command: taskset -c 1 perf stat -e ... ./packets.out 2048
+          2,532.60 msec task-clock
+    12,355,325,350      cycles
+     4,162,645,975      instructions
+       638,903,128      branches
+        16,439,862      branch-misses
+     1,020,646,988      L1-dcache-loads
+       365,590,931      L1-dcache-load-misses
+
+ipc = 0.34
+branch_miss_pct = 2.6
+l1_miss_pct = 35.8
+## Hint: run the perf stat command above. ipc = instructions / cycles (also printed as "insn per cycle" next to the instructions line); same command with 2048; compare IPC and L1 misses with the 128 run.
+
+== B2. Hotspots ==
+    81.03%  [.] cold_column_probe(...)
+     9.63%  [.] refresh_history(...)
+     2.81%  [.] branchy_score(...)
+hotspot 1: cold_column_probe self 81.0%
+## Hint: perf record -g ./packets.out 2048, then the same perf report. Compare with the top rows of the 128 run.
+hotspot 2: refresh_history self 9.6%
+
+== B3. One level deeper ==
+## cold_column_probe: the inner loop is over row; history is 4096 rows x 2048 ints = 32 MB, row-major, so each step
+## jumps 8 KB. At 128 columns the array is 2 MB and the same walk mostly hits L2/L3; at 2048 it is 32 MB, larger
+## than L3, so every read goes to DRAM. The hotspot moved because the data outgrew the cache.
+
+== B4. Diagnosis ==
+hotspot 1: cause = stride/cache misses because cold_column_probe walks down columns of a 32 MB row-major array
+hotspot 2: cause = wasteful work (memory traffic): refresh_history makes a full pass over 32 MB per epoch
+## Hint: the evidence is the self % of cold_column_probe, and its code: the inner loop walks down a column.
